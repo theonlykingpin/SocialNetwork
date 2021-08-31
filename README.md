@@ -1,2 +1,2 @@
-# social-network
-pintrest like social website
+# Social-Network
+Pinterest like social website.
