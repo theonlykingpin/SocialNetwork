@@ -133,3 +133,6 @@ dmypy.json
 migrations/
 media/
 media
+
+cert.crt
+cert.key
