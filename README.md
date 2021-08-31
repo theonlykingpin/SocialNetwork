@@ -1,2 +1,2 @@
 # Social-Network
-Pinterest like social website.
+Pinterest like social website for sharing pictures.
