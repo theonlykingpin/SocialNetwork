@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load thumbnail %}
+
+{% block title %}{{ user.get_full_name }}{% endblock %}
+
+{% block content %}
+  <h1>{{ user.get_full_name }}</h1>
+  <div class="profile-info">
+    <img src="{% thumbnail user.profile.photo 180x180 %}" class="user-detail">
+  </div>
+  {% with total_followers=user.followers.count %}
+    <span class="count">
+      <span class="total">{{ total_followers }}</span>
+      follower{{ total_followers|pluralize }}
+    </span>
+      {% if request.user != user %}
+            <a href="#" data-id="{{ user.id }}" data-action="{% if request.user in user.followers.all %}un{% endif %}follow" class="follow button">
+              {% if request.user not in user.followers.all %}
+                Follow
+              {% else %}
+                Unfollow
+              {% endif %}
+            </a>
+      {% endif %}
+    <div id="image-list" class="image-container">
+      {% with images=user.images_created.all %}
+          <h1>Images bookmarked</h1>
+          <div id="image-list">
+            {% load thumbnail %}
+            {% for image in images %}
+              <div class="image">
+                <a href="{{ image.get_absolute_url }}">
+                  {% thumbnail image.image 200x200 crop="smart" as im %}
+                  <img src="{{ im.url }}">
+                </a>
+                <div class="info">
+                  <a href="{{ image.get_absolute_url }}" class="title">
+                    {{ image.title }}
+                  </a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endwith %}
+  {% endwith %}
+{% endblock %}
+
+{% block domready %}
+        var page = 1;
+        var empty_page = false;
+        var block_request = false;
+
+        $(window).scroll(function() {
+        var margin = $(document).height() - $(window).height() - 200;
+        if  ($(window).scrollTop() > margin && empty_page == false && block_request == false) {
+            block_request = true;
+            page += 1;
+            $.get('?page=' + page, function(data) {
+                if(data == '') {
+                    empty_page = true;
+                }
+                else {
+                    block_request = false;
+                    $('#image-list').append(data)
+                }
+            });
+        }
+        });
+
+    $('a.follow').click(function(e){
+        e.preventDefault();
+        $.post(
+            '{% url "user_follow" %}',
+            {
+              id: $(this).data('id'),
+              action: $(this).data('action')
+            },
+            function(data){
+                if(data['status'] == 'ok') {
+                    var previous_action = $('a.follow').data('action');
+                    $('a.follow').data('action', previous_action == 'follow' ? 'unfollow' : 'follow')
+                    $('a.follow').text(previous_action == 'follow' ? 'unfollow' : 'follow')
+                    var previous_followers = parseInt($('span.count .total').text());
+                    $('span.count .total').text(previous_action == 'follow' ? previous_followers + 1 : previous_followers - 1)
+                }
+            }
+        );
+    });
+
+{% endblock %}
